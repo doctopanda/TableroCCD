@@ -43,3 +43,9 @@ app.use('/api', forms);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+const path = require('path');
+const frontendPath = path.join(__dirname, 'frontend-dist');
+app.use(express.static(frontendPath));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
