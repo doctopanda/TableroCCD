@@ -1,0 +1,8 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[context.production.environment]
+  VITE_SUPABASE_URL = "env_placeholder"
+  VITE_SUPABASE_ANON_KEY = "env_placeholder"
+  VITE_BACKEND_URL = "env_placeholder"
