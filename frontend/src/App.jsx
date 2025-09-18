@@ -10,21 +10,29 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route
-          path="/login"
-          element={<Login onLogin={setUser} />}
-        />
+        <Route path="/login" element={<Login onLogin={setUser} />} />
+
         <Route
           path="/dashboard"
-          element={user ? <Dashboard /> : <Navigate to="/login" />}
+          element={
+            user?.role === 'admin' ? <Dashboard /> : <Navigate to="/login" />
+          }
         />
+
         <Route
           path="/estadisticas"
-          element={user ? <Estadisticas /> : <Navigate to="/login" />}
+          element={
+            user && (user.role === 'admin' || user.role === 'viewer') ? (
+              <Estadisticas />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
         />
+
         <Route
           path="*"
-          element={<Navigate to={user ? "/dashboard" : "/login"} />}
+          element={<Navigate to={user ? (user.role === 'admin' ? "/dashboard" : "/estadisticas") : "/login"} />}
         />
       </Routes>
     </Router>
