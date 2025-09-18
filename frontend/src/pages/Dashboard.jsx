@@ -1,47 +1,45 @@
-import { useEffect, useRef, useState } from 'react';
-import ExportButtons from '../components/ExportButtons';
+import { useEffect, useState } from "react";
+import { apiFetch } from "../utils/api";
+import Navbar from "../components/Navbar";
 
-export default function Dashboard() {
+export default function Dashboard({ user, onLogout }) {
   const [records, setRecords] = useState([]);
-  const tableRef = useRef(null);
 
   useEffect(() => {
-    async function fetchRecords() {
+    const fetchData = async () => {
       try {
-        const res = await fetch('/.netlify/functions/getRecords');
-        const data = await res.json();
+        const data = await apiFetch("/.netlify/functions/getRecords");
         setRecords(data);
       } catch (err) {
-        console.error('Error fetching records:', err);
+        console.error("Error cargando registros:", err);
       }
-    }
-    fetchRecords();
+    };
+    fetchData();
   }, []);
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+    <div className="min-h-screen bg-brand-light flex flex-col">
+      <Navbar user={user} onLogout={onLogout} />
 
-      <ExportButtons tableData={records} tableRef={tableRef} />
+      <main className="flex-1 p-6 space-y-6">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
 
-      <table ref={tableRef} className="min-w-full mt-4 border border-gray-300">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border px-2 py-1">ID</th>
-            <th className="border px-2 py-1">Nombre</th>
-            <th className="border px-2 py-1">Email</th>
-          </tr>
-        </thead>
-        <tbody>
-          {records.map((r) => (
-            <tr key={r.id}>
-              <td className="border px-2 py-1">{r.id}</td>
-              <td className="border px-2 py-1">{r.name}</td>
-              <td className="border px-2 py-1">{r.email}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {records.length > 0 ? (
+            records.map((r, i) => (
+              <div
+                key={i}
+                className="bg-white shadow-lg rounded-2xl p-6 border border-gray-200"
+              >
+                <h2 className="text-lg font-semibold mb-2">{r.titulo}</h2>
+                <p className="text-sm text-gray-600">{r.descripcion}</p>
+              </div>
+            ))
+          ) : (
+            <p>No hay registros disponibles.</p>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

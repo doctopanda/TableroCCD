@@ -10,26 +10,36 @@ export async function handler(event) {
     const body = JSON.parse(event.body);
     const { email, password } = body;
 
-    // Login con Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    // Login con Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
     if (authError) throw authError;
 
-    // Traer rol desde la tabla users
-    const { data: userRole, error: roleError } = await supabase
-      .from('users')
-      .select('role')
+    // Buscar perfil asociado en profiles
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('nombre_completo, email, distrito, municipio, estado, fecha_nacimiento, rol, aprobado')
       .eq('id', authData.user.id)
       .single();
 
-    if (roleError) throw roleError;
-
-    // Devolver usuario con rol
+    if (profileError) throw profileError;
+    
+// Dentro de handler en netlify/functions/auth.js
     return {
       statusCode: 200,
       body: JSON.stringify({
         id: authData.user.id,
         email: authData.user.email,
-        role: userRole.role
+        access_token: authData.session.access_token, // 👈 se devuelve aquí
+        nombre_completo: profile.nombre_completo,
+        distrito: profile.distrito,
+        municipio: profile.municipio,
+        estado: profile.estado,
+        fecha_nacimiento: profile.fecha_nacimiento,
+        rol: profile.rol,
+        aprobado: profile.aprobado
       })
     };
   } catch (err) {

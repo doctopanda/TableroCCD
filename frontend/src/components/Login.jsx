@@ -4,10 +4,12 @@ export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
       const res = await fetch('/.netlify/functions/auth', {
@@ -16,45 +18,67 @@ export default function Login({ onLogin }) {
         body: JSON.stringify({ email, password })
       });
 
-      const user = await res.json();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error de autenticación');
 
-      if (res.ok) {
-        onLogin(user);
-      } else {
-        setError(user.error || 'Error de login');
+      // Verificar aprobación
+      if (!data.aprobado) {
+        setError('Tu cuenta está pendiente de aprobación. Contacta al administrador.');
+        setLoading(false);
+        return;
       }
+
+      // Guardar usuario en el estado global
+      onLogin(data);
     } catch (err) {
-      console.error('Login error:', err);
-      setError('Error de conexión');
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-sm mx-auto mt-10 p-4 border rounded shadow">
-      <h1 className="text-xl font-bold mb-4">Login</h1>
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border px-2 py-1 rounded"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border px-2 py-1 rounded"
-          required
-        />
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-8 rounded-lg shadow-lg w-96 space-y-4"
+      >
+        <h2 className="text-2xl font-bold text-center">Iniciar sesión</h2>
+
+        {error && (
+          <div className="bg-red-100 text-red-600 p-2 rounded text-sm">
+            {error}
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium">Correo electrónico</label>
+          <input
+            type="email"
+            className="w-full border rounded px-3 py-2 mt-1"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Contraseña</label>
+          <input
+            type="password"
+            className="w-full border rounded px-3 py-2 mt-1"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
         <button
           type="submit"
-          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
         >
-          Iniciar Sesión
+          {loading ? 'Ingresando...' : 'Ingresar'}
         </button>
       </form>
     </div>

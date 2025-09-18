@@ -1,43 +1,40 @@
-import { useEffect, useRef, useState } from 'react';
-import ExportButtons from '../components/ExportButtons';
+import { useEffect, useState } from "react";
+import { apiFetch } from "../utils/api";
+import Navbar from "../components/Navbar";
 
-export default function Estadisticas() {
-  const [stats, setStats] = useState({});
-  const tableRef = useRef(null);
+export default function Estadisticas({ user, onLogout }) {
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    async function fetchStats() {
+    const fetchData = async () => {
       try {
-        const res = await fetch('/.netlify/functions/getStatistics');
-        const data = await res.json();
+        const data = await apiFetch("/.netlify/functions/getStatistics");
         setStats(data);
       } catch (err) {
-        console.error('Error fetching statistics:', err);
+        console.error("Error cargando estadísticas:", err);
       }
-    }
-    fetchStats();
+    };
+    fetchData();
   }, []);
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Estadísticas</h1>
+    <div className="min-h-screen bg-brand-light flex flex-col">
+      <Navbar user={user} onLogout={onLogout} />
 
-      <ExportButtons tableData={[stats]} tableRef={tableRef} />
+      <main className="flex-1 p-6 space-y-6">
+        <h1 className="text-3xl font-bold">Estadísticas</h1>
 
-      <table ref={tableRef} className="min-w-full mt-4 border border-gray-300">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border px-2 py-1">Total Forms</th>
-            <th className="border px-2 py-1">Total Records</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td className="border px-2 py-1">{stats.totalForms}</td>
-            <td className="border px-2 py-1">{stats.totalRecords}</td>
-          </tr>
-        </tbody>
-      </table>
+        {stats ? (
+          <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-200">
+            <h2 className="text-lg font-semibold mb-4">Resumen</h2>
+            <pre className="text-sm bg-gray-50 p-4 rounded-lg overflow-x-auto">
+              {JSON.stringify(stats, null, 2)}
+            </pre>
+          </div>
+        ) : (
+          <p>Cargando estadísticas...</p>
+        )}
+      </main>
     </div>
   );
 }
