@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import ExportButtons from './ExportButtons';
+import ExportButtons from '../components/ExportButtons';
 
 export default function Estadisticas() {
   const [stats, setStats] = useState({});

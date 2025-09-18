@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import ExportButtons from './ExportButtons';
+import ExportButtons from '../components/ExportButtons';
 
 export default function Dashboard() {
   const [records, setRecords] = useState([]);

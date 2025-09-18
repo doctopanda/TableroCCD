@@ -3,7 +3,6 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 export default function ExportButtons({ tableData = [], tableRef }) {
-  // Exportar a Excel
   const exportExcel = () => {
     if (!tableData || !tableData.length) return;
     const ws = XLSX.utils.json_to_sheet(tableData);
@@ -12,7 +11,6 @@ export default function ExportButtons({ tableData = [], tableRef }) {
     XLSX.writeFile(wb, 'datos_export.xlsx');
   };
 
-  // Exportar a PDF
   const exportPDF = () => {
     if (!tableRef?.current) return;
     const doc = new jsPDF();
