@@ -1,45 +1,79 @@
-import { useEffect, useState } from "react";
-import { apiFetch } from "../utils/api";
-import Navbar from "../components/Navbar";
+// frontend/src/pages/Dashboard.jsx
+import { useEffect, useState, useRef } from "react";
+import ExportButtons from "../components/ExportButtons";
+import UploadPDF from "../components/UploadPDF";
 
-export default function Dashboard({ user, onLogout }) {
+export default function Dashboard() {
   const [records, setRecords] = useState([]);
+  const tableRef = useRef();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchRecords = async () => {
       try {
-        const data = await apiFetch("/.netlify/functions/getRecords");
+        const user = JSON.parse(localStorage.getItem("user"));
+        const token = user?.access_token;
+
+        const res = await fetch("/.netlify/functions/getRecords", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
         setRecords(data);
       } catch (err) {
-        console.error("Error cargando registros:", err);
+        console.error("Error al cargar registros:", err);
       }
     };
-    fetchData();
+    fetchRecords();
   }, []);
 
   return (
-    <div className="min-h-screen bg-brand-light flex flex-col">
-      <Navbar user={user} onLogout={onLogout} />
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">📊 Dashboard</h1>
 
-      <main className="flex-1 p-6 space-y-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+      <ExportButtons tableData={records} tableRef={tableRef} />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {records.length > 0 ? (
-            records.map((r, i) => (
-              <div
-                key={i}
-                className="bg-white shadow-lg rounded-2xl p-6 border border-gray-200"
-              >
-                <h2 className="text-lg font-semibold mb-2">{r.titulo}</h2>
-                <p className="text-sm text-gray-600">{r.descripcion}</p>
-              </div>
-            ))
-          ) : (
-            <p>No hay registros disponibles.</p>
-          )}
-        </div>
-      </main>
+      <div className="overflow-x-auto mt-4">
+        <table
+          ref={tableRef}
+          className="min-w-full border border-gray-300 bg-white shadow rounded-lg"
+        >
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border px-4 py-2">ID</th>
+              <th className="border px-4 py-2">Nombre</th>
+              <th className="border px-4 py-2">Email</th>
+              <th className="border px-4 py-2">PDF</th>
+            </tr>
+          </thead>
+          <tbody>
+            {records.map((record) => (
+              <tr key={record.id} className="text-center">
+                <td className="border px-4 py-2">{record.id}</td>
+                <td className="border px-4 py-2">{record.nombre}</td>
+                <td className="border px-4 py-2">{record.email}</td>
+                <td className="border px-4 py-2">
+                  {record.pdfUrl ? (
+                    <a
+                      href={record.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      Ver PDF
+                    </a>
+                  ) : (
+                    <UploadPDF
+                      onUpload={(data) => {
+                        // ⚡ aquí deberías actualizar el registro en tu DB con el URL
+                        console.log("PDF subido:", data.url);
+                      }}
+                    />
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

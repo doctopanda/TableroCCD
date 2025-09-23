@@ -1,40 +1,77 @@
-import { useEffect, useState } from "react";
-import { apiFetch } from "../utils/api";
-import Navbar from "../components/Navbar";
+// frontend/src/pages/Estadisticas.jsx
+import { useEffect, useState, useRef } from "react";
+import ExportButtons from "../components/ExportButtons";
+import UploadPDF from "../components/UploadPDF";
 
-export default function Estadisticas({ user, onLogout }) {
-  const [stats, setStats] = useState(null);
+export default function Estadisticas() {
+  const [tableData, setTableData] = useState([]);
+  const tableRef = useRef();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStats = async () => {
       try {
-        const data = await apiFetch("/.netlify/functions/getStatistics");
-        setStats(data);
+        const user = JSON.parse(localStorage.getItem("user"));
+        const token = user?.access_token;
+
+        const res = await fetch("/.netlify/functions/getStatistics", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setTableData(data);
       } catch (err) {
-        console.error("Error cargando estadísticas:", err);
+        console.error("Error al cargar estadísticas:", err);
       }
     };
-    fetchData();
+    fetchStats();
   }, []);
 
   return (
-    <div className="min-h-screen bg-brand-light flex flex-col">
-      <Navbar user={user} onLogout={onLogout} />
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">📈 Estadísticas</h1>
 
-      <main className="flex-1 p-6 space-y-6">
-        <h1 className="text-3xl font-bold">Estadísticas</h1>
+      <ExportButtons tableData={tableData} tableRef={tableRef} />
 
-        {stats ? (
-          <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-200">
-            <h2 className="text-lg font-semibold mb-4">Resumen</h2>
-            <pre className="text-sm bg-gray-50 p-4 rounded-lg overflow-x-auto">
-              {JSON.stringify(stats, null, 2)}
-            </pre>
-          </div>
-        ) : (
-          <p>Cargando estadísticas...</p>
-        )}
-      </main>
+      <div className="overflow-x-auto mt-4">
+        <table
+          ref={tableRef}
+          className="min-w-full border border-gray-300 bg-white shadow rounded-lg"
+        >
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border px-4 py-2">Categoría</th>
+              <th className="border px-4 py-2">Valor</th>
+              <th className="border px-4 py-2">PDF</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableData.map((row, index) => (
+              <tr key={index} className="text-center">
+                <td className="border px-4 py-2">{row.categoria}</td>
+                <td className="border px-4 py-2">{row.valor}</td>
+                <td className="border px-4 py-2">
+                  {row.pdfUrl ? (
+                    <a
+                      href={row.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      Ver PDF
+                    </a>
+                  ) : (
+                    <UploadPDF
+                      onUpload={(data) => {
+                        // ⚡ aquí deberías actualizar la estadística en tu DB con el URL
+                        console.log("PDF subido:", data.url);
+                      }}
+                    />
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
